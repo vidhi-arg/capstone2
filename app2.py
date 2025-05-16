@@ -118,6 +118,6 @@ if st.session_state.turns:
 # --- Reset Button ---
 st.markdown("---")
 if st.button("🔄 Reset Simulation"):
-    for key in st.session_state.keys():
+    for key in list(st.session_state.keys()):
         del st.session_state[key]
-    st.experimental_rerun()
+    st.write("Simulation reset! Please refresh the page.")
