@@ -15,31 +15,29 @@ if 'turns' not in st.session_state:
     st.session_state.peace_score = 0
     st.session_state.chaos_moves = 0
     st.session_state.ai_log = []
-
+    st.session_state.narrative = ""
 
 # --- Core AI Logic ---
 def ai_decision(user_action, state):
-    # Chaos injection chance
-    chaos_trigger = random.random() < 0.2  # 20% chance
-
+    chaos_trigger = random.random() < 0.2  # 20% chance chaos injection
     if chaos_trigger:
         st.session_state.chaos_moves += 1
-        # Intentionally destabilizing move
+        st.session_state.narrative = "⚠️ AI injected chaos this turn!"
+        # Destabilizing moves
         if user_action == 'Negotiate':
             return 'Escalate'
         elif user_action == 'Hold':
             return 'Escalate'
         else:
             return 'Hold'
-
-    # Otherwise, play it safe
-    if user_action == 'Negotiate':
-        return 'Negotiate'
-    elif user_action == 'Escalate':
-        return 'Negotiate'
     else:
-        return 'Hold'
-
+        st.session_state.narrative = "AI acting predictably."
+        if user_action == 'Negotiate':
+            return 'Negotiate'
+        elif user_action == 'Escalate':
+            return 'Negotiate'
+        else:
+            return 'Hold'
 
 # --- Reward Calculation ---
 def calculate_reward(user, ai, state):
@@ -54,7 +52,6 @@ def calculate_reward(user, ai, state):
     else:
         return 1
 
-
 # --- UI Actions ---
 st.subheader("Select Your Action")
 col1, col2, col3 = st.columns(3)
@@ -66,7 +63,6 @@ elif col2.button("⏸️ Hold"):
     user_action = 'Hold'
 elif col3.button("⚠️ Escalate"):
     user_action = 'Escalate'
-
 
 if user_action:
     state = st.session_state.state
@@ -95,22 +91,30 @@ if user_action:
 
 # --- Display Output ---
 if st.session_state.turns:
+    st.markdown("---")
+
+    # Status and narrative
+    st.subheader("🌐 Current State & Stats")
+    state_color = "green" if st.session_state.state == 'Peaceful' else "red"
+    st.markdown(f"<h3 style='color:{state_color};'>State: {st.session_state.state}</h3>", unsafe_allow_html=True)
+
+    st.markdown(f"**Peace Score:** {st.session_state.peace_score}  \n"
+                f"**Chaos Moves:** {st.session_state.chaos_moves}  \n"
+                f"**Chaos Ratio:** {(st.session_state.chaos_moves / len(st.session_state.turns)):.2f}")
+
+    st.info(st.session_state.narrative)
+
+    # Turn Log Table
     st.subheader("📜 Turn Log")
     df = pd.DataFrame(st.session_state.turns)
     st.dataframe(df, use_container_width=True, hide_index=True)
 
-    st.markdown("---")
-    st.subheader("📊 Peace Score & Chaos Ratio")
-    col1, col2 = st.columns(2)
-    col1.metric("Peace Score", st.session_state.peace_score)
-    col2.metric("Chaos Ratio", f"{st.session_state.chaos_moves / len(st.session_state.turns):.2f}")
-
-    # Line Chart
-    st.subheader("📈 Trend Visualization")
+    # Line Chart for Peace Score Trend
+    st.subheader("📈 Peace Score Trend Over Turns")
     fig, ax = plt.subplots()
-    ax.plot(df['Turn'], df['Reward'].cumsum(), label='Cumulative Peace Score', color='green')
+    ax.plot(df['Turn'], df['Reward'].cumsum(), marker='o', color='darkgreen')
     ax.set_xlabel("Turn")
-    ax.set_ylabel("Score")
+    ax.set_ylabel("Cumulative Peace Score")
     ax.set_title("Peace Trend Over Time")
     ax.grid(True)
     st.pyplot(fig)
