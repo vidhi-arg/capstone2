@@ -4,7 +4,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 st.set_page_config(page_title="NetrSim 2.0 - Chaos Under the Radar", layout="centered")
-st.title((" NetrSim 2.0 - Peace Strategy Simulator (Under the Radar)")
+st.title(" NetrSim 2.0 - Peace Strategy Simulator (Under the Radar)")
 st.caption("Train peace strategies, while AI secretly learns to inject chaos...")
 
 # Initialize session state
