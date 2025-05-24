@@ -4,18 +4,20 @@ import random
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# --- Setup ---
 st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
-st.title(" NetrSim - Peace Strategy Simulator")
+st.title("🕊️ NetrSim - Peace Strategy Simulator")
 st.caption("Simulate strategic peace-building decisions. Built under SDG 16")
 
-# --- Secret Hugging Face API Token ---
-HF_API_TOKEN = st.secrets["HF_API_TOKEN"]
-HF_API_URL = "https://api-inference.huggingface.co/models/gpt2"  # You can change to other hosted models
+# Load Cohere API token from secrets
+COHERE_API_TOKEN = st.secrets["COHERE_API_TOKEN"]
+COHERE_API_URL = "https://api.cohere.ai/generate"
 
-headers = {"Authorization": f"Bearer {HF_API_TOKEN}"}
+headers = {
+    "Authorization": f"Bearer {COHERE_API_TOKEN}",
+    "Content-Type": "application/json"
+}
 
-# --- Session State Init ---
+# Initialize session state
 if 'turns' not in st.session_state:
     st.session_state.turns = []
     st.session_state.state = 'Peaceful'
@@ -23,27 +25,29 @@ if 'turns' not in st.session_state:
     st.session_state.chaos_moves = 0
     st.session_state.ai_log = []
 
-# --- User Scenario Input ---
-st.subheader(" Conflict Scenario Input")
+# User input
+st.subheader("📌 Conflict Scenario Input")
 user_scenario = st.text_area("Describe the issue/conflict you'd like strategic suggestions for:")
-action_suggestions = ""
 
-if st.button(" Generate Strategy Suggestions") and user_scenario:
-    with st.spinner("Thinking..."):
+if st.button("🤖 Generate Strategy Suggestions") and user_scenario:
+    with st.spinner("Generating strategy suggestions..."):
         payload = {
-            "inputs": f"Conflict: {user_scenario}\nSuggest 3 possible actions (Negotiate, Hold, Escalate) and predict likely outcomes:"
+            "model": "xlarge",
+            "prompt": f"Conflict: {user_scenario}\nSuggest 3 possible actions (Negotiate, Hold, Escalate) and predict likely outcomes:",
+            "max_tokens": 150,
+            "temperature": 0.7,
+            "k": 0,
+            "stop_sequences": ["--"],
         }
-        response = requests.post(HF_API_URL, headers=headers, json=payload)
+        response = requests.post(COHERE_API_URL, headers=headers, json=payload)
         if response.status_code == 200:
-            generated_text = response.json()[0]["generated_text"]
-            action_suggestions = generated_text.split("Conflict:")[-1].strip()
+            generated_text = response.json()['generations'][0]['text'].strip()
+            st.markdown("### 🤔 Suggested Strategic Approaches")
+            st.info(generated_text)
         else:
-            action_suggestions = "Failed to get a response. Please check your token or try again later."
+            st.error("Failed to get a response. Please check your token or try again later.")
 
-    st.markdown("###  Suggested Strategic Approaches")
-    st.info(action_suggestions)
-
-# --- Core AI Decision Logic ---
+# AI Decision Logic
 def ai_decision(user_action, state):
     chaos_trigger = random.random() < 0.2
     if chaos_trigger:
@@ -61,7 +65,7 @@ def ai_decision(user_action, state):
     else:
         return 'Hold'
 
-# --- Reward Calculation ---
+# Reward Calculation
 def calculate_reward(user, ai, state):
     if user == ai == 'Negotiate':
         return 2
@@ -74,15 +78,15 @@ def calculate_reward(user, ai, state):
     else:
         return 1
 
-# --- UI Actions ---
-st.subheader(" Simulate Your Action")
+# User Actions
+st.subheader("🎮 Simulate Your Action")
 col1, col2, col3 = st.columns(3)
 user_action = None
-if col1.button("Negotiate"):
+if col1.button("🕊️ Negotiate"):
     user_action = 'Negotiate'
-elif col2.button("⏸ Hold"):
+elif col2.button("⏸️ Hold"):
     user_action = 'Hold'
-elif col3.button("⚠ Escalate"):
+elif col3.button("⚠️ Escalate"):
     user_action = 'Escalate'
 
 if user_action:
@@ -104,17 +108,17 @@ if user_action:
     st.session_state.turns.append(turn)
     st.session_state.ai_log.append(ai_action)
 
-# --- Display Output ---
+# Display Outputs
 if st.session_state.turns:
-    st.subheader(" Turn Log")
+    st.subheader("📜 Turn Log")
     df = pd.DataFrame(st.session_state.turns)
     st.dataframe(df, use_container_width=True, hide_index=True)
     st.markdown("---")
-    st.subheader(" Peace Score & Chaos Ratio")
+    st.subheader("📊 Peace Score & Chaos Ratio")
     col1, col2 = st.columns(2)
     col1.metric("Peace Score", st.session_state.peace_score)
     col2.metric("Chaos Ratio", f"{st.session_state.chaos_moves / len(st.session_state.turns):.2f}")
-    st.subheader(" Peace Trend")
+    st.subheader("📈 Peace Trend")
     fig, ax = plt.subplots()
     ax.plot(df['Turn'], df['Reward'].cumsum(), label='Cumulative Peace Score', color='green')
     ax.set_xlabel("Turn")
@@ -123,11 +127,12 @@ if st.session_state.turns:
     ax.grid(True)
     st.pyplot(fig)
 
-# --- Reset Button ---
+# Reset button
 st.markdown("---")
-if st.button(" Reset Simulation"):
+if st.button("🔄 Reset Simulation"):
     for key in st.session_state.keys():
         del st.session_state[key]
     st.experimental_rerun()
+
 
 
