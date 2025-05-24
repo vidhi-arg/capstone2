@@ -4,6 +4,24 @@ import random
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# Define API URL
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+# Prepare headers with your API key
+headers = {
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+    "Content-Type": "application/json"
+}
+# Make the POST request with headers included
+response = requests.post(API_URL, headers=headers, json=payload)
+
+# Check the response
+if response.status_code == 200:
+    data = response.json()
+    st.write("Response from API:", data)
+else:
+    st.error(f"Failed to get response. Status code: {response.status_code}")
+
 st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
 
 # Load OpenRouter API key from Streamlit secrets
