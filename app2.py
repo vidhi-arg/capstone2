@@ -4,13 +4,8 @@ import random
 import matplotlib.pyplot as plt
 import pandas as pd
 
-# Define API URL
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
-# Load OpenRouter API key from Streamlit secrets
 OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
-st.write("OpenRouter API Key loaded:", OPENROUTER_API_KEY)
 
-st.write("API Key Loaded:", st.secrets.get("openrouter", {}).get("OPENROUTER_API_KEY", " Not Found"))
 
 # Prepare headers with your API key
 headers = {
@@ -30,6 +25,13 @@ else:
 
 st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
 
+# Define API URL
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
+# Load OpenRouter API key from Streamlit secrets
+
+st.write("OpenRouter API Key loaded:", OPENROUTER_API_KEY)
+
+st.write("API Key Loaded:", st.secrets.get("openrouter", {}).get("OPENROUTER_API_KEY", " Not Found"))
 
 
 # Set OpenRouter headers
