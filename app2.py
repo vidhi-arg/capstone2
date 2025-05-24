@@ -30,7 +30,7 @@ def ask_openrouter(prompt):
     }
 
     payload = {
-        "model" = "openrouter/openai/gpt-3.5-turbo",  
+        "model": "openrouter/openai/gpt-3.5-turbo",  
         "messages": [
             {"role": "system", "content": "You are NetrSim, an AI simulating internal political situations in India. Base your responses on the Indian Constitution and real-world civil dynamics. Include Articles and basic rights when relevant."},
             {"role": "user", "content": prompt}
