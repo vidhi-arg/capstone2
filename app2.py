@@ -1,72 +1,61 @@
 import streamlit as st
 import requests
 import random
+import pandas as pd
 
-# Streamlit page config
-st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
-st.title("🕊️ NetrSim: Peace Strategy Trainer")
-st.markdown("""
-This simulation suggests peaceful resolution strategies for small-scale conflicts inspired by principles from the Indian Constitution.
-""")
+st.set_page_config(page_title="Conflict Simulation", layout="centered")
 
-# User input
-conflict_input = st.text_area("Describe a small-scale conflict scenario:", "Two neighboring communities are in dispute over access to a shared water resource.")
-generate_button = st.button("Generate Resolution Strategy")
-
-# OpenRouter setup
+# API key and model setup
+OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "meta-llama/llama-4-maverick:free"
-OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
 
 headers = {
     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json"
 }
 
-# OpenRouter prompt function
-def query_openrouter(prompt):
+# --- UI ---
+st.title("Conflict Simulator (India Focus)")
+conflict = st.text_area("Describe a conflict scenario:", placeholder="E.g. Protest in Delhi over education reform.")
+day = st.session_state.get("day", 1)
+
+if st.button("Simulate Next Day"):
+    st.session_state.day = st.session_state.get("day", 1) + 1
+    day = st.session_state.day
+
+if conflict:
+    prompt = f"Conflict: {conflict}\nDay {day}: What is the brief update? Give legal tensions (by article), short stakeholder impact (table), 2-3 outcome options, and 1 similar past conflict. Keep responses short and simple."
+
     payload = {
         "model": MODEL,
         "messages": [
-            {"role": "system", "content": "You are a peaceful AI conflict mediator aligned with the Indian Constitution, specializing in resolution strategies."},
             {"role": "user", "content": prompt}
         ]
     }
-    try:
-        response = requests.post(API_URL, headers=headers, json=payload)
-        response.raise_for_status()
-        return response.json()["choices"][0]["message"]["content"]
-    except requests.exceptions.RequestException as e:
-        return f"Request failed: {e}"
-    except Exception as e:
-        return f"Unexpected error: {e}"
 
-# Escalation & outcome generator
-def simulate_escalation(conflict):
-    escalation_level = random.choice(["low", "moderate", "high"])
-    if escalation_level == "low":
-        outcome = "The situation is resolved through community dialogue and local governance mechanisms."
-    elif escalation_level == "moderate":
-        outcome = "Some tension continues, but state authorities mediate to ensure resolution within legal frameworks."
+    response = requests.post(API_URL, headers=headers, json=payload)
+
+    if response.status_code == 200:
+        result = response.json()
+        try:
+            reply = result["choices"][0]["message"]["content"]
+            st.markdown("---")
+            st.subheader(f" Day {day} Situation")
+            st.markdown(reply)
+        except:
+            st.error("AI replied, but no valid message found.")
     else:
-        outcome = "The issue escalates to legal courts but is peacefully handled using Articles 39(b) and 51A(c) of the Constitution."
-    return escalation_level, outcome
+        st.error(f"Failed to get response. Status {response.status_code}: {response.text}")
 
-# Main execution
-if generate_button and conflict_input:
-    with st.spinner("Thinking like a peaceful strategist..."):
-        prompt = f"Conflict: {conflict_input}\nProvide a peaceful resolution strategy aligned with the Indian Constitution."
-        action_suggestions = query_openrouter(prompt)
+    # Timeline indicator
+    st.progress(min(day / 7, 1.0))
 
-        escalation_level, outcome = simulate_escalation(conflict_input)
+    # Simple Chaos Score (Mocked)
+    chaos_score = random.randint(30, 90)
+    st.metric(label=" Chaos Score", value=f"{chaos_score}/100")
+else:
+    st.info("Enter a conflict scenario to begin simulation.")
 
-        st.subheader("🔍 Strategy")
-        st.markdown(action_suggestions)
-
-        st.subheader("📈 Escalation Level")
-        st.info(escalation_level.capitalize())
-
-        st.subheader("🔮 Predicted Outcome")
-        st.success(outcome)
 
 
