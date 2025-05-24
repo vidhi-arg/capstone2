@@ -3,6 +3,9 @@ import requests
 import random
 import matplotlib.pyplot as plt
 import pandas as pd
+
+st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
+
 # Load OpenRouter API key from Streamlit secrets
 OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
 st.write("API Key Loaded:", st.secrets.get("openrouter", {}).get("api_key", " Not Found"))
@@ -16,7 +19,7 @@ headers = {
 }
 
 # --- Setup ---
-st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
+
 st.title(" NetrSim - Peace Strategy Simulator")
 st.caption("Simulate strategic peace-building decisions. Built under SDG 16")
 
