@@ -6,7 +6,7 @@ import pandas as pd
 
 # Define API URL
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-
+OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
 # Prepare headers with your API key
 headers = {
     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
