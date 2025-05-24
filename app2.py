@@ -3,6 +3,15 @@ import requests
 import random
 import matplotlib.pyplot as plt
 import pandas as pd
+# Load OpenRouter API key from Streamlit secrets
+OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
+
+# Set OpenRouter headers
+headers = {
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+    "HTTP-Referer": "https://your-app-name.streamlit.app",  # Replace with your deployed app URL
+    "X-Title": "NetrSim Peace Strategy"
+}
 
 # --- Setup ---
 st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
@@ -43,13 +52,33 @@ if st.button(" Generate Strategy Suggestions") and user_scenario:
             "temperature": 0.7
         }
 
-        response = requests.post(API_URL, headers=headers, json=payload)
+        # Replace this block:
+# response = requests.post(HF_API_URL, headers=headers, json=payload)
+# if response.status_code == 200:
+#     generated_text = response.json()[0]["generated_text"]
+#     ...
 
-        if response.status_code == 200:
-            generated_text = response.json()["choices"][0]["message"]["content"]
-            action_suggestions = generated_text.strip()
-        else:
-            action_suggestions = f"Failed to get a response. Status code: {response.status_code}"
+# With this:
+response = requests.post(
+    "https://openrouter.ai/api/v1/chat/completions",
+    headers=headers,
+    json={
+        "model": "mistralai/mixtral-8x7b",  # Free model
+        "messages": [
+            {
+                "role": "user",
+                "content": f"Conflict: {user_scenario}\nSuggest 3 possible actions (Negotiate, Hold, Escalate) and predict likely outcomes:"
+            }
+        ]
+    }
+)
+
+if response.status_code == 200:
+    reply = response.json()
+    action_suggestions = reply["choices"][0]["message"]["content"]
+else:
+    action_suggestions = f"Failed to get a response. Status code: {response.status_code}"
+
 
     st.markdown("###  Suggested Strategic Approaches")
     st.info(action_suggestions)
