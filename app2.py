@@ -1,61 +1,72 @@
 import streamlit as st
 import requests
-import json
+import random
 
-# App config
+# Streamlit page config
 st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
 st.title("🕊️ NetrSim: Peace Strategy Trainer")
+st.markdown("""
+This simulation suggests peaceful resolution strategies for small-scale conflicts inspired by principles from the Indian Constitution.
+""")
 
-# Input from user
-conflict = st.text_area("Describe the conflict scenario (local or national):")
-escalate = st.checkbox("Include escalation logic")
-show_outcomes = st.checkbox("Show predicted outcomes")
+# User input
+conflict_input = st.text_area("Describe a small-scale conflict scenario:", "Two neighboring communities are in dispute over access to a shared water resource.")
+generate_button = st.button("Generate Resolution Strategy")
 
-# Load API key
-OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
+# OpenRouter setup
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "meta-llama/llama-4-maverick:free"
+OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
 
-# API call function
+headers = {
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+    "Content-Type": "application/json"
+}
+
+# OpenRouter prompt function
 def query_openrouter(prompt):
-    url = "https://openrouter.ai/api/v1/chat/completions"
-    headers = {
-        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    body = {
+    payload = {
         "model": MODEL,
         "messages": [
+            {"role": "system", "content": "You are a peaceful AI conflict mediator aligned with the Indian Constitution, specializing in resolution strategies."},
             {"role": "user", "content": prompt}
         ]
     }
-    response = requests.post(url, headers=headers, json=body)
     try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()
         return response.json()["choices"][0]["message"]["content"]
+    except requests.exceptions.RequestException as e:
+        return f"Request failed: {e}"
     except Exception as e:
-        st.error(f"Error parsing response: {e}")
-        return None
+        return f"Unexpected error: {e}"
 
-# Generate escalation logic & outcomes
-if conflict:
-    prompt = f"""
-    You are a peace strategist AI trained on the Indian Constitution, ethics, and civil behavior.
-    A small-scale civic or political conflict has occurred:
+# Escalation & outcome generator
+def simulate_escalation(conflict):
+    escalation_level = random.choice(["low", "moderate", "high"])
+    if escalation_level == "low":
+        outcome = "The situation is resolved through community dialogue and local governance mechanisms."
+    elif escalation_level == "moderate":
+        outcome = "Some tension continues, but state authorities mediate to ensure resolution within legal frameworks."
+    else:
+        outcome = "The issue escalates to legal courts but is peacefully handled using Articles 39(b) and 51A(c) of the Constitution."
+    return escalation_level, outcome
 
-    """
-    prompt += conflict + "\n"
+# Main execution
+if generate_button and conflict_input:
+    with st.spinner("Thinking like a peaceful strategist..."):
+        prompt = f"Conflict: {conflict_input}\nProvide a peaceful resolution strategy aligned with the Indian Constitution."
+        action_suggestions = query_openrouter(prompt)
 
-    if escalate:
-        prompt += "\nPredict how this conflict might escalate if not handled properly. Include possible triggers, actors, and timeline."
+        escalation_level, outcome = simulate_escalation(conflict_input)
 
-    if show_outcomes:
-        prompt += "\nAlso predict potential outcomes based on peaceful vs non-peaceful strategies."
+        st.subheader("🔍 Strategy")
+        st.markdown(action_suggestions)
 
-    prompt += "\nFinally, suggest 3 constitutionally-aligned peaceful strategies to manage this conflict."
+        st.subheader("📈 Escalation Level")
+        st.info(escalation_level.capitalize())
 
-    with st.spinner("Analyzing conflict and generating response..."):
-        result = query_openrouter(prompt)
-        if result:
-            st.markdown("---")
-            st.subheader("🧠 AI Suggestions")
-            st.markdown(result)
+        st.subheader("🔮 Predicted Outcome")
+        st.success(outcome)
+
 
