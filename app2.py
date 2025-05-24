@@ -1,60 +1,51 @@
 import streamlit as st
 import requests
 
-st.set_page_config(page_title="NetrSim", layout="centered")
-
-# Load API Key
+# Load API key securely
 OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
 
-# Endpoint and headers
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
-headers = {
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-    "Content-Type": "application/json"
-}
+# Set Streamlit page config
+st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
 
+# Title and Instructions
+st.title("🕊️ NetrSim: Peace Strategy Trainer")
+st.markdown("Enter a simple **conflict scenario** (preferably related to civic issues or Indian constitutional matters), and NetrSim will suggest possible peace strategies.")
+
+# User Input
+user_input = st.text_area("💬 Enter a conflict scenario:", placeholder="E.g., Dispute over religious procession route in a mixed community area")
+
+# Query OpenRouter Function
 def query_openrouter(prompt):
+    url = "https://openrouter.ai/api/v1/chat/completions"
+    headers = {
+        "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+        "Content-Type": "application/json"
+    }
     payload = {
-        "model": "meta-llama/llama-3-tuned:free",
+        "model": "meta-llama/llama-4-maverick:free",
         "messages": [
+            {"role": "system", "content": "You are a peace strategist specializing in local Indian civic and constitutional conflicts."},
             {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.7,
-        "max_tokens": 250
+        ]
     }
 
-    try:
-        response = requests.post(API_URL, headers=headers, json=payload)
-    except Exception as e:
-        st.error(f"Request failed: {e}")
-        return None
+    response = requests.post(url, headers=headers, json=payload)
+    if response.status_code == 200:
+        try:
+            result = response.json()
+            return result["choices"][0]["message"]["content"]
+        except Exception as e:
+            return f"⚠️ Failed to parse response: {e}"
+    else:
+        return f"❌ Error {response.status_code}: {response.text}"
 
-    st.write(f"Status Code: {response.status_code}")  # Show status code
+# Generate Button
+if st.button("Generate Peace Strategy"):
+    if user_input.strip():
+        with st.spinner("Analyzing conflict and drafting strategies..."):
+            result = query_openrouter(user_input)
+            st.markdown("### 🧭 Suggested Strategy:")
+            st.write(result)
+    else:
+        st.warning("Please enter a conflict scenario first.")
 
-    if response.status_code != 200:
-        st.error(f"Failed to fetch response: {response.text}")
-        return None
-
-    try:
-        result = response.json()
-        return result['choices'][0]['message']['content']
-    except Exception as e:
-        st.error(f"JSON Decode Failed: {e}")
-        st.text("Raw response:")
-        st.text(response.text)
-        return None
-
-# Streamlit UI
-st.title("🧠 NetrSim: Conflict Scenario Generator")
-st.markdown("Generate a **simple Indian Constitution-based conflict** for simulation.")
-
-if st.button("🎯 Generate Conflict"):
-    prompt = (
-        "Generate a very simple conflict scenario based on the Indian Constitution. "
-        "It should involve a disagreement about fundamental rights or duties between two citizens or a citizen and a local authority. "
-        "Keep it suitable for a school-level simulation. No violence or politics."
-    )
-    conflict = query_openrouter(prompt)
-    if conflict:
-        st.subheader("🧩 Conflict Scenario:")
-        st.write(conflict)
