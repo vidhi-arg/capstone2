@@ -121,13 +121,7 @@ with cols[1]:
             st.session_state.history.append((st.session_state.day, briefing))
             st.success(f"Day {st.session_state.day} briefing generated.")
 
-with cols[2]:
-    if st.button("Reset Simulation"):
-        st.session_state.day = 0
-        st.session_state.history = []
-        st.session_state.conflict_desc = ""
-        st.session_state.analogy_mode = False
-        st.experimental_rerun()
+
 
 if st.session_state.history:
     st.subheader("Timeline Simulation")
