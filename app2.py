@@ -24,7 +24,7 @@ st.title(" NetrSim - Peace Strategy Simulator")
 st.caption("Simulate strategic peace-building decisions. Built under SDG 16")
 
 # --- OpenRouter API Token & Endpoint ---
-API_KEY = st.secrets["OPENROUTER_API_KEY"]
+API_KEY = st.secrets["api_key"]
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 MODEL = "deepseek/deepseek-r1-distill-llama-70b:free"
 
