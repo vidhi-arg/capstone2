@@ -5,6 +5,8 @@ import matplotlib.pyplot as plt
 import pandas as pd
 # Load OpenRouter API key from Streamlit secrets
 OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
+st.write("API Key Loaded:", st.secrets.get("openrouter", {}).get("api_key", " Not Found"))
+
 
 # Set OpenRouter headers
 headers = {
