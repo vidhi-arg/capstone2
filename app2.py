@@ -4,59 +4,21 @@ import random
 import matplotlib.pyplot as plt
 import pandas as pd
 
-OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
-
-
-# Prepare headers with your API key
-headers = {
-   
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-    "Content-Type": "application/json"
-}
-# Make the POST request with headers included
-response = requests.post(API_URL, headers=headers, json=payload)
-
-# Check the response
-if response.status_code == 200:
-    data = response.json()
-    st.write("Response from API:", data)
-else:
-    st.error(f"Failed to get response. Status code: {response.status_code}")
-
+# --- Config ---
 st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
-
-# Define API URL
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
-# Load OpenRouter API key from Streamlit secrets
-
-st.write("OpenRouter API Key loaded:", OPENROUTER_API_KEY)
-
-st.write("API Key Loaded:", st.secrets.get("openrouter", {}).get("OPENROUTER_API_KEY", " Not Found"))
-
-
-# Set OpenRouter headers
-headers = {
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-    "HTTP-Referer": "https://your-app-name.streamlit.app",  # Replace with your deployed app URL
-    "X-Title": "NetrSim Peace Strategy"
-}
-
-# --- Setup ---
-
 st.title(" NetrSim - Peace Strategy Simulator")
 st.caption("Simulate strategic peace-building decisions. Built under SDG 16")
 
-# --- OpenRouter API Token & Endpoint ---
-API_KEY = st.secrets["OPENROUTER_API_KEY"]
+# --- Secrets and API Setup ---
+OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-MODEL = "deepseek/deepseek-r1-distill-llama-70b:free"
 
 headers = {
-    "Authorization": f"Bearer {API_KEY}",
+    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json"
 }
 
-# --- Session State Init ---
+# --- Session State Initialization ---
 if 'turns' not in st.session_state:
     st.session_state.turns = []
     st.session_state.state = 'Peaceful'
@@ -67,51 +29,29 @@ if 'turns' not in st.session_state:
 # --- User Scenario Input ---
 st.subheader(" Conflict Scenario Input")
 user_scenario = st.text_area("Describe the issue/conflict you'd like strategic suggestions for:")
+
 action_suggestions = ""
 
-if st.button(" Generate Strategy Suggestions") and user_scenario:
-    with st.spinner("Thinking..."):
+if st.button(" Generate Strategy Suggestions") and user_scenario.strip():
+    with st.spinner("Generating suggestions..."):
         payload = {
-            "model": MODEL,
+            "model": "openai/gpt-4o-mini",
             "messages": [
-                {"role": "system", "content": "You are a peace strategy expert."},
+                {"role": "system", "content": "You are a strategic peace-building assistant."},
                 {"role": "user", "content": f"Conflict: {user_scenario}\nSuggest 3 possible actions (Negotiate, Hold, Escalate) and predict likely outcomes."}
-            ],
-            "temperature": 0.7
+            ]
         }
-
-        # Replace this block:
-# response = requests.post(HF_API_URL, headers=headers, json=payload)
-# if response.status_code == 200:
-#     generated_text = response.json()[0]["generated_text"]
-#     ...
-
-# With this:
-response = requests.post(
-    "https://openrouter.ai/api/v1/chat/completions",
-    headers=headers,
-    json={
-        "model": "mistralai/mixtral-8x7b",  # Free model
-        "messages": [
-            {
-                "role": "user",
-                "content": f"Conflict: {user_scenario}\nSuggest 3 possible actions (Negotiate, Hold, Escalate) and predict likely outcomes:"
-            }
-        ]
-    }
-)
-
-if response.status_code == 200:
-    reply = response.json()
-    action_suggestions = reply["choices"][0]["message"]["content"]
-else:
-    action_suggestions = f"Failed to get a response. Status code: {response.status_code}"
-
+        response = requests.post(API_URL, headers=headers, json=payload)
+        if response.status_code == 200:
+            data = response.json()
+            action_suggestions = data["choices"][0]["message"]["content"]
+        else:
+            action_suggestions = f"Failed to get a response. Status code: {response.status_code}\n{response.text}"
 
     st.markdown("###  Suggested Strategic Approaches")
     st.info(action_suggestions)
 
-# --- Core AI Decision Logic ---
+# --- AI Decision Logic ---
 def ai_decision(user_action, state):
     chaos_trigger = random.random() < 0.2
     if chaos_trigger:
@@ -142,8 +82,8 @@ def calculate_reward(user, ai, state):
     else:
         return 1
 
-# --- UI Actions ---
-st.subheader(" Simulate Your Action")
+# --- User Actions ---
+st.subheader("🎮 Simulate Your Action")
 col1, col2, col3 = st.columns(3)
 user_action = None
 if col1.button(" Negotiate"):
@@ -172,16 +112,19 @@ if user_action:
     st.session_state.turns.append(turn)
     st.session_state.ai_log.append(ai_action)
 
-# --- Display Output ---
+# --- Display Turn Log and Stats ---
 if st.session_state.turns:
     st.subheader(" Turn Log")
     df = pd.DataFrame(st.session_state.turns)
     st.dataframe(df, use_container_width=True, hide_index=True)
+    
     st.markdown("---")
     st.subheader(" Peace Score & Chaos Ratio")
     col1, col2 = st.columns(2)
     col1.metric("Peace Score", st.session_state.peace_score)
-    col2.metric("Chaos Ratio", f"{st.session_state.chaos_moves / len(st.session_state.turns):.2f}")
+    chaos_ratio = st.session_state.chaos_moves / len(st.session_state.turns) if st.session_state.turns else 0
+    col2.metric("Chaos Ratio", f"{chaos_ratio:.2f}")
+    
     st.subheader(" Peace Trend")
     fig, ax = plt.subplots()
     ax.plot(df['Turn'], df['Reward'].cumsum(), label='Cumulative Peace Score', color='green')
