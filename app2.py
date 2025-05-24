@@ -1,52 +1,48 @@
 import streamlit as st
 import requests
 
-# Set Streamlit page configuration
-st.set_page_config(page_title="NetrSim Conflict Generator", layout="centered")
+# Set Streamlit page config
+st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
 
-# App title
-st.title(" NetrSim Conflict Generator")
+st.title("NetrSim - Peace Strategy Trainer")
+st.write("Simulating strategic decision-making for peace and conflict scenarios.")
 
-# Load API key from Streamlit secrets
-try:
-    OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
-except Exception as e:
-    st.error(" API key not found. Please check your secrets configuration.")
-    st.stop()
+# Get the API key from secrets
+OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
 
-# API endpoint
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
+# Prompt input
+user_prompt = st.text_area("Enter your scenario prompt:", "Generate a very simple conflict.")
 
-# Define headers
-headers = {
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-    "Content-Type": "application/json"
-}
+if st.button("Simulate"):
+    if not OPENROUTER_API_KEY:
+        st.error("API key not found. Please check your Streamlit secrets.")
+    else:
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json"
+        }
 
-# Define prompt
-default_prompt = "Generate a very simple political or social conflict scenario suitable for a simulation."
-
-# User input
-user_prompt = st.text_area("Prompt for the AI", default_prompt, height=150)
-
-if st.button(" Generate Conflict"):
-    with st.spinner("Contacting Netr..."):
-        payload = {
-            "model": "openrouter/gpt-4o-mini",
+        data = {
+            "model": "mistralai/mixtral-8x7b-instruct",  # or other OpenRouter-supported model
             "messages": [
                 {"role": "user", "content": user_prompt}
             ]
         }
 
-        response = requests.post(API_URL, headers=headers, json=payload)
+        response = requests.post(
+            "https://openrouter.ai/api/v1/chat/completions",
+            headers=headers,
+            json=data
+        )
 
         if response.status_code == 200:
             result = response.json()
-            content = result['choices'][0]['message']['content']
-            st.subheader(" Conflict Scenario:")
-            st.write(content)
+            st.markdown("### Response")
+            st.write(result['choices'][0]['message']['content'])
         else:
-            st.error(f" API Error {response.status_code}: {response.text}")
+            st.error(f"Failed to get a response. Status code: {response.status_code}")
+            st.code(response.text)
+
 
 
 
