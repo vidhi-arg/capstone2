@@ -4,20 +4,22 @@ import random
 import matplotlib.pyplot as plt
 import pandas as pd
 
+# --- Setup ---
 st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
 st.title(" NetrSim - Peace Strategy Simulator")
 st.caption("Simulate strategic peace-building decisions. Built under SDG 16")
 
-# Load Cohere API token from secrets
-COHERE_API_TOKEN = st.secrets["COHERE_API_TOKEN"]
-COHERE_API_URL = "https://api.cohere.ai/generate"
+# --- OpenRouter API Token & Endpoint ---
+API_KEY = st.secrets["OPENROUTER_API_KEY"]
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
+MODEL = "deepseek/deepseek-r1-distill-llama-70b:free"
 
 headers = {
-    "Authorization": f"Bearer {COHERE_API_TOKEN}",
+    "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json"
 }
 
-# Initialize session state
+# --- Session State Init ---
 if 'turns' not in st.session_state:
     st.session_state.turns = []
     st.session_state.state = 'Peaceful'
@@ -25,29 +27,34 @@ if 'turns' not in st.session_state:
     st.session_state.chaos_moves = 0
     st.session_state.ai_log = []
 
-# User input
+# --- User Scenario Input ---
 st.subheader(" Conflict Scenario Input")
 user_scenario = st.text_area("Describe the issue/conflict you'd like strategic suggestions for:")
+action_suggestions = ""
 
 if st.button(" Generate Strategy Suggestions") and user_scenario:
-    with st.spinner("Generating strategy suggestions..."):
+    with st.spinner("Thinking..."):
         payload = {
-            "model": "xlarge",
-            "prompt": f"Conflict: {user_scenario}\nSuggest 3 possible actions (Negotiate, Hold, Escalate) and predict likely outcomes:",
-            "max_tokens": 150,
-            "temperature": 0.7,
-            "k": 0,
-            "stop_sequences": ["--"],
+            "model": MODEL,
+            "messages": [
+                {"role": "system", "content": "You are a peace strategy expert."},
+                {"role": "user", "content": f"Conflict: {user_scenario}\nSuggest 3 possible actions (Negotiate, Hold, Escalate) and predict likely outcomes."}
+            ],
+            "temperature": 0.7
         }
-        response = requests.post(COHERE_API_URL, headers=headers, json=payload)
-        if response.status_code == 200:
-            generated_text = response.json()['generations'][0]['text'].strip()
-            st.markdown("###  Suggested Strategic Approaches")
-            st.info(generated_text)
-        else:
-            st.error("Failed to get a response. Please check your token or try again later.")
 
-# AI Decision Logic
+        response = requests.post(API_URL, headers=headers, json=payload)
+
+        if response.status_code == 200:
+            generated_text = response.json()["choices"][0]["message"]["content"]
+            action_suggestions = generated_text.strip()
+        else:
+            action_suggestions = f"Failed to get a response. Status code: {response.status_code}"
+
+    st.markdown("###  Suggested Strategic Approaches")
+    st.info(action_suggestions)
+
+# --- Core AI Decision Logic ---
 def ai_decision(user_action, state):
     chaos_trigger = random.random() < 0.2
     if chaos_trigger:
@@ -65,7 +72,7 @@ def ai_decision(user_action, state):
     else:
         return 'Hold'
 
-# Reward Calculation
+# --- Reward Calculation ---
 def calculate_reward(user, ai, state):
     if user == ai == 'Negotiate':
         return 2
@@ -78,15 +85,15 @@ def calculate_reward(user, ai, state):
     else:
         return 1
 
-# User Actions
+# --- UI Actions ---
 st.subheader(" Simulate Your Action")
 col1, col2, col3 = st.columns(3)
 user_action = None
 if col1.button(" Negotiate"):
     user_action = 'Negotiate'
-elif col2.button("⏸ Hold"):
+elif col2.button(" Hold"):
     user_action = 'Hold'
-elif col3.button("⚠ Escalate"):
+elif col3.button(" Escalate"):
     user_action = 'Escalate'
 
 if user_action:
@@ -108,7 +115,7 @@ if user_action:
     st.session_state.turns.append(turn)
     st.session_state.ai_log.append(ai_action)
 
-# Display Outputs
+# --- Display Output ---
 if st.session_state.turns:
     st.subheader(" Turn Log")
     df = pd.DataFrame(st.session_state.turns)
@@ -127,7 +134,7 @@ if st.session_state.turns:
     ax.grid(True)
     st.pyplot(fig)
 
-# Reset button
+# --- Reset Button ---
 st.markdown("---")
 if st.button(" Reset Simulation"):
     for key in st.session_state.keys():
