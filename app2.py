@@ -25,7 +25,9 @@ else:
 st.set_page_config(page_title="NetrSim: Peace Strategy Trainer", layout="centered")
 
 # Load OpenRouter API key from Streamlit secrets
-OPENROUTER_API_KEY = st.secrets["OPENROUTER_API_KEY"]
+OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
+st.write("OpenRouter API Key loaded:", OPENROUTER_API_KEY)
+
 st.write("API Key Loaded:", st.secrets.get("openrouter", {}).get("OPENROUTER_API_KEY", " Not Found"))
 
 
