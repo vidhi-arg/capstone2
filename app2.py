@@ -83,7 +83,7 @@ def calculate_reward(user, ai, state):
         return 1
 
 # --- User Actions ---
-st.subheader("🎮 Simulate Your Action")
+st.subheader(" Simulate Your Action")
 col1, col2, col3 = st.columns(3)
 user_action = None
 if col1.button(" Negotiate"):
