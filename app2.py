@@ -45,40 +45,63 @@ Day {day} briefing:
 
 st.title("NetrSim: Peace Strategy Trainer")
 
-conflict_input = st.text_area("Describe the conflict (small-scale, Indian Constitution relevant):", height=100)
-
+# Initialize session state variables if missing
 if "day" not in st.session_state:
-    st.session_state.day = 1
-
+    st.session_state.day = 0
 if "history" not in st.session_state:
     st.session_state.history = []
+if "conflict_input" not in st.session_state:
+    st.session_state.conflict_input = ""
 
-if st.button("Start Simulation"):
-    if not conflict_input.strip():
-        st.warning("Please enter a conflict description.")
-    else:
-        st.session_state.day = 1
-        prompt = generate_prompt(conflict_input, st.session_state.day)
-        briefing = query_openrouter(prompt)
-        st.session_state.history = [(st.session_state.day, briefing)]
-        st.success(f"Day {st.session_state.day} briefing generated.")
-        st.write(briefing)
+# Conflict input box (disable if simulation started)
+conflict_input = st.text_area(
+    "Describe the conflict (small-scale, Indian Constitution relevant):",
+    value=st.session_state.conflict_input,
+    height=100,
+    disabled=st.session_state.day > 0
+)
 
-if st.button("Simulate Next Day"):
-    if not st.session_state.history:
-        st.warning("Start the simulation first by clicking 'Start Simulation'.")
-    else:
-        st.session_state.day += 1
-        prompt = generate_prompt(conflict_input, st.session_state.day)
-        briefing = query_openrouter(prompt)
-        st.session_state.history.append((st.session_state.day, briefing))
-        st.success(f"Day {st.session_state.day} briefing generated.")
-        st.write(briefing)
+# Buttons layout
+col1, col2, col3 = st.columns(3)
 
+with col1:
+    if st.button("Start Simulation"):
+        if not conflict_input.strip():
+            st.warning("Please enter a conflict description.")
+        else:
+            st.session_state.conflict_input = conflict_input.strip()
+            st.session_state.day = 1
+            prompt = generate_prompt(st.session_state.conflict_input, st.session_state.day)
+            briefing = query_openrouter(prompt)
+            st.session_state.history = [(st.session_state.day, briefing)]
+            st.success(f"Day {st.session_state.day} briefing generated.")
+            st.write(briefing)
+
+with col2:
+    if st.button("Simulate Next Day"):
+        if st.session_state.day == 0:
+            st.warning("Start the simulation first by clicking 'Start Simulation'.")
+        else:
+            st.session_state.day += 1
+            prompt = generate_prompt(st.session_state.conflict_input, st.session_state.day)
+            briefing = query_openrouter(prompt)
+            st.session_state.history.append((st.session_state.day, briefing))
+            st.success(f"Day {st.session_state.day} briefing generated.")
+            st.write(briefing)
+
+with col3:
+    if st.button("Reset Simulation"):
+        st.session_state.day = 0
+        st.session_state.history = []
+        st.session_state.conflict_input = ""
+        st.experimental_rerun()
+
+# Show history if exists
 if st.session_state.history:
     st.subheader("Simulation History:")
     for day_num, text in st.session_state.history:
         st.markdown(f"**Day {day_num}:** {text}")
+
 
 
 
