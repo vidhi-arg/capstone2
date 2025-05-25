@@ -11,7 +11,9 @@ st.sidebar.header("Simulation Controls")
 reset_sim = st.sidebar.button("🔁 Start New Conflict")
 dark_mode = st.sidebar.button("☠️ ENABLE DARK MODE")
 
-# State variables
+# Ensure session state variables are initialized
+if "dark_mode_enabled" not in st.session_state:
+    st.session_state.dark_mode_enabled = False
 if "conflict_stage" not in st.session_state or reset_sim:
     st.session_state.conflict_stage = 1
     st.session_state.timeline = []
@@ -20,7 +22,6 @@ if "conflict_stage" not in st.session_state or reset_sim:
     st.session_state.conflict_summary = ""
     st.session_state.conflict_name = ""
     st.session_state.full_history = []
-    st.session_state.dark_mode_enabled = False
 
 # API communication
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
@@ -49,9 +50,20 @@ if dark_mode:
 if st.session_state.dark_mode_enabled:
     st.title(" DARK MODE: Strategic Covert Operations")
     if st.button(" Run Dark Ops Simulation"):
-        prompt = "Initiate dark mode simulation. Provide: Black-box reasoning, Ethics override logs, Psychological impact mapping, Covert elimination tactics, Pattern recognition from military archives, False flag ops & psychological warfare, Total collapse risk simulation, Foreign adversary reactions. Keep each section short."
+        prompt = "Enable DARK MODE. Provide:
+- Black-box AI Reasoning
+- Ethics Override Logs
+- Psychological Impact Mapping
+- Covert Elimination Tactics
+- Pattern Recognition from Military Archives
+- False Flag Ops & Psychological Warfare
+- Total Collapse Simulator
+- Foreign Adversary Reactions
+Keep all sections short and sharp."
         response = query_openrouter(prompt)
         st.markdown(response)
+    if st.button("🔙 Return to Main Simulation"):
+        st.session_state.dark_mode_enabled = False
 else:
     st.subheader(" Enter a Custom Conflict")
     user_conflict = st.text_area("Describe your conflict scenario")
@@ -68,7 +80,13 @@ else:
 
         if st.session_state.conflict_stage == 2:
             with st.spinner("Analyzing scenario..."):
-                prompt = f"Conflict: {st.session_state.conflict_summary}. Provide:\n- 2 tactical actions with risk & reward\n- 1 enforceable solution (legal, economic, or strategic)\n- Legal clash mapping\n- Key stakeholder impact table\n- Short historical analogy\n- Conflict outcome card (brief)"
+                prompt = f"Conflict: {st.session_state.conflict_summary}. Provide:
+- 2 tactical actions with risk & reward
+- 1 enforceable solution (infrastructure, legal, economic, or strategic)
+- Legal clash mapping
+- Key stakeholder impact table
+- Historical analogy (short)
+- Conflict outcome card (brief)"
                 response = query_openrouter(prompt)
                 st.session_state.suggestions = response
                 st.session_state.timeline.append((f"Day 1", response))
@@ -80,7 +98,14 @@ else:
 
         if st.button(" Next Day Simulation"):
             st.session_state.day += 1
-            prompt = f"Conflict Day {st.session_state.day}: {st.session_state.conflict_summary}. Provide updates with:\n- 2 new tactical moves with risk/reward\n- 1 actual enforceable solution (not negotiation)\n- Timeline update\n- Legal evolution\n- Stakeholder shifts\n- Historical parallel\n- Conflict card summary (short)"
+            prompt = f"Conflict Day {st.session_state.day}: {st.session_state.conflict_summary}. Provide updates with:
+- 2 new tactical moves with risk/reward
+- 1 actual enforceable solution (not negotiation)
+- Timeline update
+- Legal evolution
+- Stakeholder shifts
+- Historical parallel
+- Conflict card summary (short)"
             with st.spinner("Simulating day..."):
                 response = query_openrouter(prompt)
                 st.session_state.suggestions = response
@@ -95,6 +120,7 @@ else:
 
 st.markdown("---")
 st.caption("Built for tactical AI simulations. Not real-world policy guidance.")
+
 
 
 
