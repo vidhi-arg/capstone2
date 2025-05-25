@@ -8,6 +8,7 @@ st.title(" NetrSim: Strategic Conflict Simulator")
 # Sidebar
 st.sidebar.header("Simulation Controls")
 reset_sim = st.sidebar.button(" Reset Simulation")
+dark_mode = st.sidebar.button("Enable Dark Mode")
 
 # Initialize or Reset
 if "conflict_stage" not in st.session_state or reset_sim:
@@ -36,11 +37,19 @@ def query_ai(prompt):
         return result["choices"][0]["message"]["content"]
     except Exception as e:
         return f" Error in AI response: {str(e)}"
+if dark_mode:
+    st.session_state.dark_mode_enabled = True
 
+if st.session_state.dark_mode_enabled:
+    st.title(" DARK MODE: Strategic Covert Operations")
+     st.button(" Run Dark Ops Simulation"):
+        prompt = "Initiate dark mode simulation. Provide: Black-box reasoning, Ethics override logs, Psychological impact mapping, Covert elimination tactics, Pattern recognition from military archives, False flag ops & psychological warfare, Total collapse risk simulation, Foreign adversary reactions. Keep each section short."
+        response = query_openrouter(prompt)
+        st.markdown(response)
 # Stage 0: Input conflict
-if st.session_state.conflict_stage == 0:
-    st.subheader(" Define Your Conflict Scenario")
-    st.session_state.conflict_text = st.text_area("Describe a small-scale conflict:", height=100)
+else: st.session_state.conflict_stage == 0:
+      st.subheader(" Define Your Conflict Scenario")
+      st.session_state.conflict_text = st.text_area("Describe a small-scale conflict:", height=100)
     if st.button(" Launch Simulation"):
         if st.session_state.conflict_text.strip():
             st.session_state.conflict_stage = 1
