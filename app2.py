@@ -1,48 +1,31 @@
 import streamlit as st
 import requests
-import random
 import json
 
-st.set_page_config(page_title="Conflict Simulation AI", layout="wide")
-st.title("🧠 Strategic Conflict Simulation AI")
-st.markdown("Use this AI tool to simulate conflicts, assess chaos potential, and explore tactical actions.")
+st.set_page_config(page_title="NetrSim AI", layout="wide")
+st.title("🧠 NetrSim: Strategic Conflict Simulator")
 
-# Sidebar Controls
+# Sidebar
 st.sidebar.header("Simulation Controls")
-reset_sim = st.sidebar.button("🔁 Start New Conflict")
+reset_sim = st.sidebar.button("🔁 Reset Simulation")
 
-# State variables
+# Initialize or Reset
 if "conflict_stage" not in st.session_state or reset_sim:
-    st.session_state.conflict_stage = 1
+    st.session_state.conflict_stage = 0
     st.session_state.timeline = []
+    st.session_state.day = 0
     st.session_state.suggestions = ""
-    st.session_state.day = 1
-    st.session_state.conflict_summary = ""
-    st.session_state.conflict_name = ""
-    st.session_state.full_history = []
+    st.session_state.conflict_text = ""
 
-# Conflict Generator
-conflict_list = [
-    "Dispute over CCTV installation between privacy-conscious tenants and security-focused residents in Pune.",
-    "Clash between two farmer groups over canal water distribution in Tamil Nadu.",
-    "Tension in a college over dress code enforcement perceived as discriminatory.",
-    "Vendor rivalry in a small city market over access to a government contract.",
-    "Protest over illegal encroachment of a community playground by a political group."
-]
-
-def generate_conflict():
-    return random.choice(conflict_list)
-
-# API communication
+# API config
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
-
 headers = {
     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json"
 }
 
-def query_openrouter(prompt):
+def query_ai(prompt):
     payload = {
         "model": "meta-llama/llama-4-maverick:free",
         "messages": [{"role": "user", "content": prompt}]
@@ -51,61 +34,69 @@ def query_openrouter(prompt):
     try:
         result = response.json()
         return result["choices"][0]["message"]["content"]
-    except:
-        return "⚠️ AI failed to generate a response."
+    except Exception as e:
+        return f"❌ Error in AI response: {str(e)}"
 
-# Main Simulation UI
+# Stage 0: Input conflict
+if st.session_state.conflict_stage == 0:
+    st.subheader("📝 Define Your Conflict Scenario")
+    st.session_state.conflict_text = st.text_area("Describe a small-scale conflict:", height=100)
+    if st.button("🚀 Launch Simulation"):
+        if st.session_state.conflict_text.strip():
+            st.session_state.conflict_stage = 1
+            st.session_state.day = 1
+
+# Stage 1: Day 1 briefing
 if st.session_state.conflict_stage == 1:
-    if st.button("🎲 Generate Conflict"):
-        st.session_state.conflict_summary = generate_conflict()
+    st.subheader(f"📍 Conflict Briefing — Day {st.session_state.day}")
+    st.markdown(f"**Conflict:** {st.session_state.conflict_text}")
+    
+    with st.spinner("Simulating Day 1..."):
+        prompt = f"""Conflict: {st.session_state.conflict_text}
+Generate a DAY 1 response including:
+- 2 tactical actions (with risk/reward)
+- 1 realistic enforceable solution (legal/economic/strategic)
+- Legal clash mapping
+- Dynamic stakeholder impact table
+- Historical analogy (short)
+- Conflict outcome card (1-2 lines)
+Keep it short and actionable."""
+        response = query_ai(prompt)
+        st.session_state.suggestions = response
+        st.session_state.timeline.append((f"Day {st.session_state.day}", response))
         st.session_state.conflict_stage = 2
 
+# Stage 2+: Show current day & simulate next day
 if st.session_state.conflict_stage >= 2:
-    st.subheader("📌 Conflict Briefing")
-    st.write(st.session_state.conflict_summary)
-
-    if st.session_state.conflict_stage == 2:
-        with st.spinner("Analyzing scenario..."):
-            prompt = f"Conflict: {st.session_state.conflict_summary}. Provide:
-            - 2 tactical actions (risk & reward)
-            - 1 realistic hard solution (legal/economic/strategic)
-            - Legal clash mapping
-            - Key stakeholder impact table
-            - Short historical analogy
-            - Conflict outcome card (brief)"
-            response = query_openrouter(prompt)
-            st.session_state.suggestions = response
-            st.session_state.timeline.append((f"Day 1", response))
-            st.session_state.conflict_stage = 3
-
-if st.session_state.conflict_stage >= 3:
     st.subheader(f"📅 Day {st.session_state.day} Briefing")
     st.markdown(st.session_state.suggestions)
 
-    if st.button("📈 Next Day Simulation"):
+    if st.button("➡️ Next Day"):
         st.session_state.day += 1
-        prompt = f"Conflict Day {st.session_state.day}: {st.session_state.conflict_summary}. Provide updates with:
-        - 2 new tactical moves with risk/reward
-        - 1 actual enforceable solution (not negotiation)
-        - Timeline update
-        - Legal evolution
-        - Stakeholder shifts
-        - Historical parallel
-        - Conflict card summary (short)"
-        with st.spinner("Simulating day..."):
-            response = query_openrouter(prompt)
+        with st.spinner(f"Simulating Day {st.session_state.day}..."):
+            prompt = f"""Conflict ongoing: {st.session_state.conflict_text}
+Generate Day {st.session_state.day} update with:
+- 2 new tactical actions (with risk/reward)
+- 1 actual enforceable solution (non-negotiation based)
+- Timeline update
+- Legal evolution
+- Stakeholder shifts
+- Historical parallel (brief)
+- Conflict outcome card (concise)"""
+            response = query_ai(prompt)
             st.session_state.suggestions = response
             st.session_state.timeline.append((f"Day {st.session_state.day}", response))
 
-# Timeline Display
+# Timeline
 if st.session_state.timeline:
-    st.subheader("🧭 Conflict Timeline")
+    st.subheader("📜 Conflict Timeline")
     for day, content in st.session_state.timeline:
         with st.expander(day):
             st.markdown(content)
 
 st.markdown("---")
-st.caption("Built for tactical AI simulations. Not real-world policy guidance.")
+st.caption("Built with 🧠 for strategic simulations. Not real policy advice.")
+
 
 
 
