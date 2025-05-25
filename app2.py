@@ -3,11 +3,11 @@ import requests
 import json
 
 st.set_page_config(page_title="NetrSim AI", layout="wide")
-st.title("🧠 NetrSim: Strategic Conflict Simulator")
+st.title(" NetrSim: Strategic Conflict Simulator")
 
 # Sidebar
 st.sidebar.header("Simulation Controls")
-reset_sim = st.sidebar.button("🔁 Reset Simulation")
+reset_sim = st.sidebar.button(" Reset Simulation")
 
 # Initialize or Reset
 if "conflict_stage" not in st.session_state or reset_sim:
@@ -35,20 +35,20 @@ def query_ai(prompt):
         result = response.json()
         return result["choices"][0]["message"]["content"]
     except Exception as e:
-        return f"❌ Error in AI response: {str(e)}"
+        return f" Error in AI response: {str(e)}"
 
 # Stage 0: Input conflict
 if st.session_state.conflict_stage == 0:
-    st.subheader("📝 Define Your Conflict Scenario")
+    st.subheader(" Define Your Conflict Scenario")
     st.session_state.conflict_text = st.text_area("Describe a small-scale conflict:", height=100)
-    if st.button("🚀 Launch Simulation"):
+    if st.button(" Launch Simulation"):
         if st.session_state.conflict_text.strip():
             st.session_state.conflict_stage = 1
             st.session_state.day = 1
 
 # Stage 1: Day 1 briefing
 if st.session_state.conflict_stage == 1:
-    st.subheader(f"📍 Conflict Briefing — Day {st.session_state.day}")
+    st.subheader(f" Conflict Briefing — Day {st.session_state.day}")
     st.markdown(f"**Conflict:** {st.session_state.conflict_text}")
     
     with st.spinner("Simulating Day 1..."):
@@ -68,10 +68,10 @@ Keep it short and actionable."""
 
 # Stage 2+: Show current day & simulate next day
 if st.session_state.conflict_stage >= 2:
-    st.subheader(f"📅 Day {st.session_state.day} Briefing")
+    st.subheader(f" Day {st.session_state.day} Briefing")
     st.markdown(st.session_state.suggestions)
 
-    if st.button("➡️ Next Day"):
+    if st.button("➡ Next Day"):
         st.session_state.day += 1
         with st.spinner(f"Simulating Day {st.session_state.day}..."):
             prompt = f"""Conflict ongoing: {st.session_state.conflict_text}
@@ -89,13 +89,13 @@ Generate Day {st.session_state.day} update with:
 
 # Timeline
 if st.session_state.timeline:
-    st.subheader("📜 Conflict Timeline")
+    st.subheader(" Conflict Timeline")
     for day, content in st.session_state.timeline:
         with st.expander(day):
             st.markdown(content)
 
 st.markdown("---")
-st.caption("Built with 🧠 for strategic simulations. Not real policy advice.")
+st.caption("Built for strategic simulations. Not real policy advice.")
 
 
 
