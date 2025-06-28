@@ -3,13 +3,13 @@ import requests
 import json
 
 st.set_page_config(page_title="Conflict Simulation AI", layout="wide")
-st.title("🧠 Strategic Conflict Simulation AI")
+st.title("Strategic Conflict Simulation AI")
 st.markdown("Use this AI tool to simulate conflicts, assess chaos potential, and explore tactical actions.")
 
 # Sidebar Controls
 st.sidebar.header("Simulation Controls")
-reset_sim = st.sidebar.button("🔁 Start New Conflict")
-dark_mode = st.sidebar.button("☠️ ENABLE DARK MODE")
+reset_sim = st.sidebar.button(" Start New Conflict")
+dark_mode = st.sidebar.button(" ENABLE DARK MODE")
 
 # Ensure session state variables are initialized
 if "dark_mode_enabled" not in st.session_state:
@@ -62,7 +62,7 @@ if st.session_state.dark_mode_enabled:
 Keep all sections short and sharp."
         response = query_openrouter(prompt)
         st.markdown(response)
-    if st.button("🔙 Return to Main Simulation"):
+    if st.button(" Return to Main Simulation"):
         st.session_state.dark_mode_enabled = False
 else:
     st.subheader(" Enter a Custom Conflict")
