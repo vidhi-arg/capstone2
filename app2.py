@@ -57,7 +57,32 @@ if st.session_state.conflict_stage >= 2:
 
     if st.session_state.conflict_stage == 2:
         with st.spinner("Generating initial analysis..."):
-            prompt = f"""Conflict Scenario: {st.session_state.conflict_summary}
+            prompt = # Revised Prompt for Local Conflicts
+country = st.selectbox("Select the country of conflict", ["India", "Pakistan", "Bangladesh", "Nepal", "Sri Lanka"])
+
+prompt = f"""
+Conflict Simulation for Local Dispute
+
+Location: {country}  
+Conflict: {st.session_state.conflict_summary}
+
+Provide the following in a formal legal-policy tone:
+1. **Conflict Background**: Explain the likely root causes of this issue in small-town or village context.
+2. **Past Rulings**: Cite real or likely past court rulings, panchayat resolutions, or administrative interventions in similar issues **within {country}**.
+3. **Relevant Laws/Articles**: Mention 2–3 constitutional articles, state laws, or customary codes that are relevant to this conflict.
+4. **Key Stakeholders**: List all parties affected or involved (villagers, caste/community groups, NGOs, police, district administration, etc.)
+5. **Legal & Strategic Options**:
+   - 2 Enforceable interventions (legal, administrative, or infrastructure-based)
+   - Risk/Reward for each option
+6. **Historical Parallel**: Briefly refer to a similar case in {country} from the last 50 years, and how it was resolved.
+7. **Conflict Outcome Card**:  
+   - Legal status:  Constitutional /  Unclear /  Illegal  
+   - Stakeholder risk index: High/Medium/Low  
+   - Escalation potential: High/Medium/Low  
+
+Respond clearly in markdown with headings.
+"""
+
 Provide:
 - Two tactical options (with risk/reward analysis)
 - One enforceable policy/strategic solution (infrastructure, legal, economic, military)
