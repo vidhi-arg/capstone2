@@ -2,117 +2,108 @@ import streamlit as st
 import requests
 import json
 
-st.set_page_config(page_title="Conflict Simulation AI", layout="wide")
-st.title("Strategic Conflict Simulation AI")
-st.markdown("Use this AI tool to simulate **local conflicts**, assess potential outcomes, and explore legal and historical solutions.")
+st.set_page_config(page_title="Local Conflict Simulation AI", layout="wide")
+st.title("Local Conflict Simulation AI")
+st.markdown("Use this tool to simulate small-scale conflicts (villages/towns), assess legal precedent, and explore enforceable solutions.")
 
-# Sidebar Controls
-st.sidebar.header("Simulation Controls")
-reset_sim = st.sidebar.button("Start New Conflict")
-
-# Initialize session state variables
-if "conflict_stage" not in st.session_state or reset_sim:
+# Initialize session state
+if "conflict_stage" not in st.session_state:
     st.session_state.conflict_stage = 1
+    st.session_state.day = 1
     st.session_state.timeline = []
     st.session_state.suggestions = ""
-    st.session_state.day = 1
     st.session_state.conflict_summary = ""
     st.session_state.country = ""
-    st.session_state.full_history = []
 
-# API communication setup
+# API setup
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
+API_KEY = st.secrets["openrouter"]["api_key"]
 
 headers = {
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+    "Authorization": f"Bearer {API_KEY}",
     "Content-Type": "application/json"
 }
 
-def query_openrouter(prompt):
+def query_ai(conflict, country, day):
+    prompt = f"""
+Conflict Day {day} - Local Scale Simulation
+
+Conflict: {conflict}
+Country: {country}
+
+Provide:
+- Brief summary of the conflict
+- Relevant historical or legal precedents (specific to {country})
+- Stakeholders involved and their motivations
+- Legal provisions (constitution, land law, civil code, local bylaws, etc.)
+- 2 proposed tactical or policy actions (risk & reward)
+- 1 enforceable resolution based on legal or strategic grounds
+- Short timeline update
+- Compact Conflict Card: Summary, Risk Level, Probability of Resolution
+"""
+
     payload = {
         "model": "meta-llama/llama-4-maverick:free",
         "messages": [{"role": "user", "content": prompt}]
     }
-    response = requests.post(API_URL, headers=headers, json=payload)
+
     try:
+        response = requests.post(API_URL, headers=headers, json=payload)
+        response.raise_for_status()
         result = response.json()
         return result["choices"][0]["message"]["content"]
-    except:
-        return "AI failed to generate a response."
+    except Exception as e:
+        return f"❌ AI failed to generate a response.\n\n{str(e)}"
 
-# User Input
-st.subheader("Enter a Local Conflict")
-conflict_description = st.text_area("Describe the conflict in detail (local dispute, village issue, etc.)")
-country_input = st.text_input("Which country is this conflict occurring in?")
+# User input
+st.subheader("Define Your Conflict")
+conflict = st.text_area("Conflict Scenario (village/town level)")
+country = st.text_input("Country where this conflict is taking place")
 
 if st.session_state.conflict_stage == 1:
     if st.button("Start Simulation"):
-        if conflict_description and country_input:
-            st.session_state.conflict_summary = conflict_description
-            st.session_state.country = country_input
+        if conflict and country:
+            st.session_state.conflict_summary = conflict
+            st.session_state.country = country
             st.session_state.conflict_stage = 2
         else:
-            st.warning("Please enter both the conflict and the country.")
+            st.warning("Please enter both conflict and country.")
 
-# Show country
-if st.session_state.country:
+# Show conflict
+if st.session_state.conflict_stage >= 2:
+    st.subheader("Conflict Details")
+    st.write(f"**Conflict:** {st.session_state.conflict_summary}")
     st.write(f"**Country:** {st.session_state.country}")
 
-# Simulation stage 2: Initial analysis
-if st.session_state.conflict_stage == 2:
-    with st.spinner("Analyzing conflict scenario..."):
-        prompt = f"""
-Conflict Description: {st.session_state.conflict_summary}
-Country: {st.session_state.country}
+    if st.session_state.conflict_stage == 2:
+        with st.spinner("Generating Day 1 Simulation..."):
+            result = query_ai(st.session_state.conflict_summary, st.session_state.country, 1)
+            st.session_state.suggestions = result
+            st.session_state.timeline.append(("Day 1", result))
+            st.session_state.conflict_stage = 3
 
-Generate a detailed briefing:
-- Historical context of similar conflicts in this country
-- Past rulings by local/national courts or constitutional articles that apply
-- Key stakeholders involved (villagers, government bodies, others)
-- Legal and constitutional frameworks likely to be invoked
-- 2 tactical action suggestions (with risks and rewards)
-- 1 enforceable solution (policy/legal/infrastructure)
-- Conflict status summary
-"""
-        response = query_openrouter(prompt)
-        st.session_state.suggestions = response
-        st.session_state.timeline.append((f"Day 1", response))
-        st.session_state.conflict_stage = 3
-
-# Simulation stage 3: Show results and iterate
+# Display simulation
 if st.session_state.conflict_stage >= 3:
     st.subheader(f"Day {st.session_state.day} Briefing")
     st.markdown(st.session_state.suggestions)
 
-    if st.button("Next Day Simulation"):
+    if st.button("Simulate Next Day"):
         st.session_state.day += 1
-        with st.spinner("Simulating next day..."):
-            prompt = f"""
-Conflict: {st.session_state.conflict_summary}
-Country: {st.session_state.country}
+        with st.spinner(f"Simulating Day {st.session_state.day}..."):
+            result = query_ai(st.session_state.conflict_summary, st.session_state.country, st.session_state.day)
+            st.session_state.suggestions = result
+            st.session_state.timeline.append((f"Day {st.session_state.day}", result))
 
-Simulate Day {st.session_state.day}. Provide:
-- Updated legal or civil developments
-- Stakeholder movements or changes in positions
-- New tactical options (2 suggestions, with risks and rewards)
-- Constitution/court references evolving due to new circumstances
-- One practical solution or intervention
-- Conflict trajectory update
-"""
-            response = query_openrouter(prompt)
-            st.session_state.suggestions = response
-            st.session_state.timeline.append((f"Day {st.session_state.day}", response))
-
-# Timeline Display
-if st.session_state.timeline:
-    st.subheader("Conflict Timeline")
-    for day, content in st.session_state.timeline:
-        with st.expander(day):
-            st.markdown(content)
+    # Timeline display
+    if st.session_state.timeline:
+        st.subheader("Conflict Timeline")
+        for day, content in st.session_state.timeline:
+            with st.expander(day):
+                st.markdown(content)
 
 st.markdown("---")
-st.caption("Built for educational simulations. Not real-world policy advice.")
+st.caption("Built for civic and legal education. Not real-world legal advice.")
+
 
 
 
