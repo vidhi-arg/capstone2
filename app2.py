@@ -20,7 +20,7 @@ if "conflict_stage" not in st.session_state or reset_sim:
 # API config
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 # --- OpenRouter API Config ---
-OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
+OPENROUTER_API_KEY = st.secrets[openrouter][api_key]
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 headers = {
