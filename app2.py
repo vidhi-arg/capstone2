@@ -19,10 +19,27 @@ if "conflict_stage" not in st.session_state or reset_sim:
 
 # API config
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
+# --- OpenRouter API Config ---
 OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]
+API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
 headers = {
     "Authorization": f"Bearer {OPENROUTER_API_KEY}",
     "Content-Type": "application/json"
+}
+
+def query_ai(prompt):
+    payload = {
+        "model": "meta-llama/llama-4-maverick:free",  
+        "messages": [{"role": "user", "content": prompt}]
+    }
+    response = requests.post(API_URL, headers=headers, json=payload)
+    try:
+        result = response.json()
+        return result["choices"][0]["message"]["content"]
+    except Exception as e:
+        return f" Error in AI response: {str(e)}"
+
 }
 
 def query_ai(prompt):
