@@ -40,7 +40,6 @@ def query_ai(prompt):
     except Exception as e:
         return f" Error in AI response: {str(e)}"
 
-}
 
 def query_ai(prompt):
     payload = {
