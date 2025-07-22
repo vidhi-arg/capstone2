@@ -3,7 +3,7 @@ import requests
 import json
 
 # Config
-API_KEY = st.secrets["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"]
+API_KEY = st.secrets["OPENROUTER_API_KEY"]
 MODEL = "openrouter/mistral-7b-instruct"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
