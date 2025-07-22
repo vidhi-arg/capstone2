@@ -31,8 +31,7 @@ if submitted:
         with st.spinner("Contacting legal AI..."):
 
             # Prompt
-            prompt = f"""
-
+prompt = f"""
 You are a legal AI assistant trained to provide structured legal advice in JSON format.
 
 Your task:
@@ -44,10 +43,10 @@ Given a conflict and the country it occurred in, return only valid JSON containi
 - Suggested actions
 
 IMPORTANT:
- Do not include any explanations.
- Do not use markdown or headings.
- Do not preface your response.
- Only return valid JSON. Start with '{{' and end with '}}'.
+• Do not include any explanations.
+• Do not use markdown or headings.
+• Do not preface your response.
+• Only return valid JSON. Start with '{{' and end with '}}'.
 
 Input:
 Country: {country}
@@ -56,7 +55,7 @@ Conflict: {issue}
 Output (ONLY JSON):
 """
 
-"""
+
 
             headers = {
                 "Authorization": f"Bearer {API_KEY}",
