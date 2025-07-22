@@ -32,7 +32,7 @@ if submitted:
 
             # Prompt
             prompt = f"""
-prompt = f"""
+
 You are a legal AI assistant trained to provide structured legal advice in JSON format.
 
 Your task:
