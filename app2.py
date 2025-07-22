@@ -2,57 +2,38 @@ import streamlit as st
 import requests
 import json
 
-# === OpenRouter API config ===
+# Config
 API_KEY = st.secrets["OPENROUTER_API_KEY"]
 MODEL = "mistralai/mistral-7b-instruct"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# === UI ===
 st.set_page_config(page_title="Legal AI Assistant")
-st.title(" Legal AI Assistant (with Rulings)")
-st.markdown("Get relevant constitutional laws, court cases, rulings, and legal advice for small-town conflicts.")
+st.title("🧾 Legal AI Assistant (OpenRouter)")
+st.markdown("Get legal insight for village or small-town conflicts based on your country’s constitution and court history.")
 
-# === Input Form ===
-with st.form("legal_form"):
+# Input form
+with st.form("input_form"):
     country = st.selectbox("Select Country", ["India", "USA", "Canada", "UK"])
     issue = st.text_area("Describe the conflict in detail")
     submit = st.form_submit_button("Analyze")
 
-# === On Submit ===
+# Handle submit
 if submit:
     if not issue.strip():
         st.error("Please describe the issue.")
     else:
-        with st.spinner("Analyzing..."):
-
-            # === Updated Prompt ===
+        with st.spinner("Thinking like a lawyer..."):
             prompt = f"""
 You are a legal AI.
 
-Given:
+Based on:
 Country: {country}
 Issue: {issue}
 
-Return ONLY valid JSON in this exact format:
+Return ONLY valid JSON in this format:
 {{
-  "article": "Relevant article or law",
-  "cases": [
-    {{
-      "name": "Case name",
-      "year": 2000,
-      "ruling": "What the court decided in this case"
-    }},
-    {{
-      "name": "...",
-      "year": 2005,
-      "ruling": "..."
-    }},
-    {{
-      "name": "...",
-      "year": 2017,
-      "ruling": "..."
-    }}
-  ],
+  "article": "Relevant article/law here",
+  "cases": [{{"name": "...", "year": 2020}}, {{...}}, {{...}}],
   "escalation_paths": ["...", "..."],
   "people_involved": {{
     "complainant": "...",
@@ -61,8 +42,7 @@ Return ONLY valid JSON in this exact format:
   }},
   "suggested_actions": ["...", "..."]
 }}
-
-NO extra commentary. NO markdown. Just valid JSON.
+No extra text. No markdown. Just valid JSON.
 """
 
             headers = {
@@ -92,28 +72,27 @@ NO extra commentary. NO markdown. Just valid JSON.
                         st.code(content)
                         st.stop()
 
-                    st.subheader(" Relevant Article")
+                    st.subheader("📜 Relevant Article")
                     st.code(data["article"])
 
-                    st.subheader(" Past Court Cases & Rulings")
+                    st.subheader("📁 Past Cases")
                     for case in data["cases"]:
-                        st.markdown(f"**{case['name']}** ({case['year']})")
-                        st.write(f"**Ruling:** {case['ruling']}")
+                        st.markdown(f"- **{case['name']}** ({case['year']})")
 
-                    st.subheader(" Escalation Paths")
+                    st.subheader("⚠️ Escalation Paths")
                     for path in data["escalation_paths"]:
                         st.markdown(f"- {path}")
 
-                    st.subheader(" People Involved")
+                    st.subheader("👥 People Involved")
                     for role, name in data["people_involved"].items():
                         st.markdown(f"- **{role.title()}**: {name}")
 
-                    st.subheader(" Suggested Actions")
+                    st.subheader("✅ Suggested Actions")
                     for step in data["suggested_actions"]:
                         st.markdown(f"- {step}")
-
             except Exception as e:
                 st.error(f"Something went wrong: {e}")
+
 
 
 
