@@ -115,7 +115,8 @@ Do not explain. Do not add commentary. Return only valid JSON. No markdown.
                     st.markdown(f"- {step}")
 
             except Exception as e:
-                st.error(f"Somet
+                st.error(f"Something went wrong: {e}")
+
 
 
 
