@@ -4,7 +4,7 @@ import json
 
 # Config
 API_KEY = st.secrets["OPENROUTER_API_KEY"]
-MODEL = "openrouter/mistral-7b-instruct"
+MODEL = "mistralai/mistral-7b-instruct"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 st.set_page_config(page_title="Legal AI Assistant")
