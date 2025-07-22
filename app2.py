@@ -5,7 +5,11 @@ import json
 # === OpenRouter API config ===
 API_KEY = "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"
 MODEL = "mistralai/mistral-7b-instruct"
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
+
+headers = {
+    "Authorization": f"Bearer {API_KEY}",
+    "Content-Type": "application/json"
+}
 
 # === UI ===
 st.set_page_config(page_title="Legal AI Assistant", layout="centered")
