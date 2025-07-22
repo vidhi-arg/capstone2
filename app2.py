@@ -3,7 +3,7 @@ import requests
 import json
 
 # === OpenRouter API Config ===
-API_KEY = "sk-or-v1-your-real-key-here"  # Replace with your actual OpenRouter key
+API_KEY = "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"  
 MODEL = "anthropic/claude-3-haiku"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
