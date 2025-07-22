@@ -32,42 +32,30 @@ if submitted:
 
             # Prompt
             prompt = f"""
-You are a legal AI.
+prompt = f"""
+You are a legal AI assistant trained to provide structured legal advice in JSON format.
 
-Given:
+Your task:
+Given a conflict and the country it occurred in, return only valid JSON containing:
+- Relevant article or law
+- 3 past court cases with name, year, and ruling
+- Escalation paths
+- People involved
+- Suggested actions
+
+IMPORTANT:
+• Do not include any explanations.
+• Do not use markdown or headings.
+• Do not preface your response.
+• Only return valid JSON. Start with '{{' and end with '}}'.
+
+Input:
 Country: {country}
-Issue: {issue}
+Conflict: {issue}
 
-Return ONLY valid JSON in this exact format:
-{{
-  "article": "Relevant article or law",
-  "cases": [
-    {{
-      "name": "Case name",
-      "year": 2000,
-      "ruling": "What the court decided in this case"
-    }},
-    {{
-      "name": "...",
-      "year": 2005,
-      "ruling": "..."
-    }},
-    {{
-      "name": "...",
-      "year": 2017,
-      "ruling": "..."
-    }}
-  ],
-  "escalation_paths": ["...", "..."],
-  "people_involved": {{
-    "complainant": "...",
-    "defendant": "...",
-    "authority": "..."
-  }},
-  "suggested_actions": ["...", "..."]
-}}
+Output (ONLY JSON):
+"""
 
-No extra commentary. No markdown. Only return valid JSON.
 """
 
             headers = {
