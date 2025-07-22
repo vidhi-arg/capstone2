@@ -1,38 +1,39 @@
 import streamlit as st
 import requests
-import os
 import json
 
-# === SETUP ===
-API_KEY = "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"
+# Config
+API_KEY = st.secrets["OPENROUTER_API_KEY"]
 MODEL = "openrouter/mistral-7b-instruct"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-# === UI ===
-st.set_page_config(page_title="Legal AI", layout="centered")
-st.title(" Local Conflict → Legal Insight")
+st.set_page_config(page_title="Legal AI Assistant")
+st.title(" Legal AI Assistant (OpenRouter)")
+st.markdown("Get legal insight for village or small-town conflicts based on your country’s constitution and court history.")
 
-country = st.selectbox("Your Country", ["India", "USA", "Canada", "UK"])
-issue = st.text_area("Describe the conflict ")
-submit = st.button("Get Legal Breakdown")
+# Input form
+with st.form("input_form"):
+    country = st.selectbox("Select Country", ["India", "USA", "Canada", "UK"])
+    issue = st.text_area("Describe the conflict in detail")
+    submit = st.form_submit_button("Analyze")
 
-# === PROCESS ===
+# Handle submit
 if submit:
     if not issue.strip():
-        st.error("Describe the issue.")
+        st.error("Please describe the issue.")
     else:
-        with st.spinner("Contacting legal AI..."):
+        with st.spinner("Thinking like a lawyer..."):
             prompt = f"""
 You are a legal AI.
 
-Given the following:
+Based on:
 Country: {country}
 Issue: {issue}
 
-Return only valid JSON with:
+Return ONLY valid JSON in this format:
 {{
-  "article": "Relevant law",
-  "cases": [{{"name": "...", "year": 2000}}, {{...}}, {{...}}],
+  "article": "Relevant article/law here",
+  "cases": [{{"name": "...", "year": 2020}}, {{...}}, {{...}}],
   "escalation_paths": ["...", "..."],
   "people_involved": {{
     "complainant": "...",
@@ -41,6 +42,7 @@ Return only valid JSON with:
   }},
   "suggested_actions": ["...", "..."]
 }}
+No extra text. No markdown. Just valid JSON.
 """
 
             headers = {
@@ -56,32 +58,40 @@ Return only valid JSON with:
 
             try:
                 res = requests.post(API_URL, headers=headers, json=payload)
-                out = res.json()
-                msg = out["choices"][0]["message"]["content"]
-                data = json.loads(msg)
+                res_json = res.json()
 
-                st.subheader("Relevant Article")
-                st.code(data["article"])
+                if "choices" not in res_json:
+                    st.error("API Error:")
+                    st.json(res_json)
+                else:
+                    content = res_json["choices"][0]["message"]["content"]
+                    try:
+                        data = json.loads(content)
+                    except:
+                        st.error("The model did not return valid JSON.")
+                        st.code(content)
+                        st.stop()
 
-                st.subheader("Cases")
-                for c in data["cases"]:
-                    st.markdown(f"- **{c['name']}** ({c['year']})")
+                    st.subheader(" Relevant Article")
+                    st.code(data["article"])
 
-                st.subheader("Escalation Paths")
-                for step in data["escalation_paths"]:
-                    st.markdown(f"- {step}")
+                    st.subheader(" Past Cases")
+                    for case in data["cases"]:
+                        st.markdown(f"- **{case['name']}** ({case['year']})")
 
-                st.subheader("People Involved")
-                for role, person in data["people_involved"].items():
-                    st.markdown(f"- **{role.title()}**: {person}")
+                    st.subheader(" Escalation Paths")
+                    for path in data["escalation_paths"]:
+                        st.markdown(f"- {path}")
 
-                st.subheader("Suggested Actions")
-                for act in data["suggested_actions"]:
-                    st.markdown(f"- {act}")
+                    st.subheader(" People Involved")
+                    for role, name in data["people_involved"].items():
+                        st.markdown(f"- **{role.title()}**: {name}")
 
+                    st.subheader(" Suggested Actions")
+                    for step in data["suggested_actions"]:
+                        st.markdown(f"- {step}")
             except Exception as e:
                 st.error(f"Something went wrong: {e}")
-
 
 
 
