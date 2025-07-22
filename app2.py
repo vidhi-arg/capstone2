@@ -44,10 +44,10 @@ Given a conflict and the country it occurred in, return only valid JSON containi
 - Suggested actions
 
 IMPORTANT:
-• Do not include any explanations.
-• Do not use markdown or headings.
-• Do not preface your response.
-• Only return valid JSON. Start with '{{' and end with '}}'.
+ Do not include any explanations.
+ Do not use markdown or headings.
+ Do not preface your response.
+ Only return valid JSON. Start with '{{' and end with '}}'.
 
 Input:
 Country: {country}
