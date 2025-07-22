@@ -1,116 +1,87 @@
 import streamlit as st
 import requests
+import os
 import json
 
-st.set_page_config(page_title="Conflict Stimulator AI", layout="wide")
-st.title(" NetrSim: Strategic Conflict Simulator")
-
-# Sidebar
-st.sidebar.header("Simulation Controls")
-reset_sim = st.sidebar.button(" Reset Simulation")
-
-# Initialize or Reset
-if "conflict_stage" not in st.session_state or reset_sim:
-    st.session_state.conflict_stage = 0
-    st.session_state.timeline = []
-    st.session_state.day = 0
-    st.session_state.suggestions = ""
-    st.session_state.conflict_text = ""
-
-# API config
-API_URL = "https://openrouter.ai/api/v1/chat/completions"
-OPENROUTER_API_KEY = st.secrets["openrouter"]["api_key"]  
+# === SETUP ===
+API_KEY = "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"
+MODEL = "openrouter/mistral-7b-instruct"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
-headers = {
-    "Authorization": f"Bearer {OPENROUTER_API_KEY}",
-    "Content-Type": "application/json"
-}
+# === UI ===
+st.set_page_config(page_title="Legal AI", layout="centered")
+st.title(" Local Conflict → Legal Insight")
 
-def query_ai(prompt):
-    payload = {
-        "model": "meta-llama/llama-4-maverick:free",  
-        "messages": [{"role": "user", "content": prompt}]
-    }
-    response = requests.post(API_URL, headers=headers, json=payload)
-    try:
-        result = response.json()
-        return result["choices"][0]["message"]["content"]
-    except Exception as e:
-        return f" Error in AI response: {str(e)}"
+country = st.selectbox("Your Country", ["India", "USA", "Canada", "UK"])
+issue = st.text_area("Describe the conflict ")
+submit = st.button("Get Legal Breakdown")
 
+# === PROCESS ===
+if submit:
+    if not issue.strip():
+        st.error("Describe the issue.")
+    else:
+        with st.spinner("Contacting legal AI..."):
+            prompt = f"""
+You are a legal AI.
 
-def query_ai(prompt):
-    payload = {
-        "model": "meta-llama/llama-4-maverick:free",
-        "messages": [{"role": "user", "content": prompt}]
-    }
-    response = requests.post(API_URL, headers=headers, json=payload)
-    try:
-        result = response.json()
-        return result["choices"][0]["message"]["content"]
-    except Exception as e:
-        return f" Error in AI response: {str(e)}"
+Given the following:
+Country: {country}
+Issue: {issue}
 
-# Stage 0: Input conflict
-if st.session_state.conflict_stage == 0:
-    st.subheader(" Define Your Conflict Scenario")
-    st.session_state.conflict_text = st.text_area("Describe a small-scale conflict:", height=100)
-    if st.button(" Launch Simulation"):
-        if st.session_state.conflict_text.strip():
-            st.session_state.conflict_stage = 1
-            st.session_state.day = 1
+Return only valid JSON with:
+{{
+  "article": "Relevant law",
+  "cases": [{{"name": "...", "year": 2000}}, {{...}}, {{...}}],
+  "escalation_paths": ["...", "..."],
+  "people_involved": {{
+    "complainant": "...",
+    "defendant": "...",
+    "authority": "..."
+  }},
+  "suggested_actions": ["...", "..."]
+}}
+"""
 
-# Stage 1: Day 1 briefing
-if st.session_state.conflict_stage == 1:
-    st.subheader(f" Conflict Briefing — Day {st.session_state.day}")
-    st.markdown(f"**Conflict:** {st.session_state.conflict_text}")
-    
-    with st.spinner("Simulating Day 1..."):
-        prompt = f"""Conflict: {st.session_state.conflict_text}
-Generate a DAY 1 response including:
-- 2 tactical actions (with risk/reward)
-- 1 realistic enforceable solution (legal/economic/strategic)
-- Legal clash mapping
-- Dynamic stakeholder impact table
-- Historical analogy (short)
-- Conflict outcome card (1-2 lines)
-Keep it short and actionable."""
-        response = query_ai(prompt)
-        st.session_state.suggestions = response
-        st.session_state.timeline.append((f"Day {st.session_state.day}", response))
-        st.session_state.conflict_stage = 2
+            headers = {
+                "Authorization": f"Bearer {API_KEY}",
+                "Content-Type": "application/json"
+            }
 
-# Stage 2+: Show current day & simulate next day
-if st.session_state.conflict_stage >= 2:
-    st.subheader(f" Day {st.session_state.day} Briefing")
-    st.markdown(st.session_state.suggestions)
+            payload = {
+                "model": MODEL,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.4
+            }
 
-    if st.button(" Next Day"):
-        st.session_state.day += 1
-        with st.spinner(f"Simulating Day {st.session_state.day}..."):
-            prompt = f"""Conflict ongoing: {st.session_state.conflict_text}
-Generate Day {st.session_state.day} update with:
-- 2 new tactical actions (with risk/reward)
-- 1 actual enforceable solution (non-negotiation based)
-- Timeline update
-- Legal evolution
-- Stakeholder shifts
-- Historical parallel (brief)
-- Conflict outcome card (concise)"""
-            response = query_ai(prompt)
-            st.session_state.suggestions = response
-            st.session_state.timeline.append((f"Day {st.session_state.day}", response))
+            try:
+                res = requests.post(API_URL, headers=headers, json=payload)
+                out = res.json()
+                msg = out["choices"][0]["message"]["content"]
+                data = json.loads(msg)
 
-# Timeline
-if st.session_state.timeline:
-    st.subheader(" Conflict Timeline")
-    for day, content in st.session_state.timeline:
-        with st.expander(day):
-            st.markdown(content)
+                st.subheader("Relevant Article")
+                st.code(data["article"])
 
-st.markdown("---")
-st.caption("Built with  for strategic simulations. Not real policy advice.")
+                st.subheader("Cases")
+                for c in data["cases"]:
+                    st.markdown(f"- **{c['name']}** ({c['year']})")
+
+                st.subheader("Escalation Paths")
+                for step in data["escalation_paths"]:
+                    st.markdown(f"- {step}")
+
+                st.subheader("People Involved")
+                for role, person in data["people_involved"].items():
+                    st.markdown(f"- **{role.title()}**: {person}")
+
+                st.subheader("Suggested Actions")
+                for act in data["suggested_actions"]:
+                    st.markdown(f"- {act}")
+
+            except Exception as e:
+                st.error(f"Something went wrong: {e}")
+
 
 
 
