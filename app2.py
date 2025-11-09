@@ -2,7 +2,7 @@ import streamlit as st
 import requests
 import json
 
-API_KEY = "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"
+API_KEY = "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"
 MODEL = "anthropic/claude-3-haiku"
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
