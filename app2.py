@@ -2,15 +2,14 @@ import streamlit as st
 import requests
 import json
 
-# === OpenRouter API Config ===
-API_KEY = "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"  
-MODEL = "anthropic/claude-3-haiku"
+API_KEY = "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" 
+MODEL = "anthropic/claude-3-haiku" 
 API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # === UI ===
 st.set_page_config(page_title="Legal AI Assistant", layout="centered")
-st.title("⚖️ Legal AI Assistant (with Predicted Rulings)")
-st.markdown("Get laws, rulings, classifications, escalation paths, and legal strategies.")
+st.title(" Case Decoder")
+
 
 # === Input Form ===
 with st.form("legal_form"):
@@ -90,27 +89,27 @@ Do not explain. Do not add commentary. Return only valid JSON. No markdown.
                 try:
                     data = json.loads(content)
                 except json.JSONDecodeError:
-                    st.error("❌ The model did NOT return valid JSON.")
+                    st.error(" The model did NOT return valid JSON.")
                     st.code(content)
                     st.stop()
 
                 # === NEW TOP SECTIONS ===
-                st.subheader("📌 Case Classification")
+                st.subheader("Case Classification")
                 st.code(data["classification"])
 
-                st.subheader("🎯 Predicted Court Ruling")
+                st.subheader("Predicted Court Ruling")
                 st.code(data["predicted_ruling"])
 
                 # === Existing Sections ===
-                st.subheader("📜 Relevant Article or Law")
+                st.subheader("Relevant Article or Law")
                 st.code(data["article"])
 
-                st.subheader("🏛️ Past Court Cases & Rulings")
+                st.subheader(" Past Court Cases & Rulings")
                 for case in data["cases"]:
                     st.markdown(f"**{case['name']}** ({case['year']})")
                     st.write(f"**Ruling:** {case['ruling']}")
 
-                st.subheader("📈 Escalation Paths")
+                st.subheader("Escalation Paths")
                 for path in data["escalation_paths"]:
                     st.markdown(f"- {path}")
 
@@ -118,7 +117,7 @@ Do not explain. Do not add commentary. Return only valid JSON. No markdown.
                 for role, person in data["people_involved"].items():
                     st.markdown(f"- **{role.title()}**: {person}")
 
-                st.subheader("✅ Suggested Actions")
+                st.subheader("Suggested Actions")
                 for step in data["suggested_actions"]:
                     st.markdown(f"- {step}")
 
