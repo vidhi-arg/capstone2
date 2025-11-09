@@ -113,7 +113,7 @@ Do not explain. Do not add commentary. Return only valid JSON. No markdown.
                 for path in data["escalation_paths"]:
                     st.markdown(f"- {path}")
 
-                st.subheader("👥 People Involved")
+                st.subheader(" People Involved")
                 for role, person in data["people_involved"].items():
                     st.markdown(f"- **{role.title()}**: {person}")
 
