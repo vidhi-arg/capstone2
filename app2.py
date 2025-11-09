@@ -9,8 +9,8 @@ API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # === UI ===
 st.set_page_config(page_title="Legal AI Assistant", layout="centered")
-st.title(" Legal AI Assistant (with Rulings)")
-st.markdown("Get laws, past rulings, escalation steps, and legal help for your conflict.")
+st.title("⚖️ Legal AI Assistant (with Predicted Rulings)")
+st.markdown("Get laws, rulings, classifications, escalation paths, and legal strategies.")
 
 # === Input Form ===
 with st.form("legal_form"):
@@ -25,7 +25,6 @@ if submitted:
     else:
         with st.spinner("Analyzing..."):
 
-            # Mistral needs structure + instructions in the prompt
             prompt = f"""
 You are a legal AI assistant. Given a conflict and the country it occurred in, return only valid JSON.
 
@@ -34,6 +33,8 @@ Conflict: {issue}
 
 Return ONLY JSON in this format:
 {{
+  "classification": "Civil / Criminal / Constitutional / Cyber / Property / etc.",
+  "predicted_ruling": "Summary of what the court is most likely to decide",
   "article": "Relevant article or law",
   "cases": [
     {{
@@ -89,34 +90,40 @@ Do not explain. Do not add commentary. Return only valid JSON. No markdown.
                 try:
                     data = json.loads(content)
                 except json.JSONDecodeError:
-                    st.error(" The model did not return valid JSON.")
+                    st.error("❌ The model did NOT return valid JSON.")
                     st.code(content)
                     st.stop()
 
-                # === Display Results ===
-                st.subheader(" Relevant Article or Law")
+                # === NEW TOP SECTIONS ===
+                st.subheader("📌 Case Classification")
+                st.code(data["classification"])
+
+                st.subheader("🎯 Predicted Court Ruling")
+                st.code(data["predicted_ruling"])
+
+                # === Existing Sections ===
+                st.subheader("📜 Relevant Article or Law")
                 st.code(data["article"])
 
-                st.subheader(" Past Court Cases & Rulings")
+                st.subheader("🏛️ Past Court Cases & Rulings")
                 for case in data["cases"]:
                     st.markdown(f"**{case['name']}** ({case['year']})")
                     st.write(f"**Ruling:** {case['ruling']}")
 
-                st.subheader(" Escalation Paths")
+                st.subheader("📈 Escalation Paths")
                 for path in data["escalation_paths"]:
                     st.markdown(f"- {path}")
 
-                st.subheader(" People Involved")
+                st.subheader("👥 People Involved")
                 for role, person in data["people_involved"].items():
                     st.markdown(f"- **{role.title()}**: {person}")
 
-                st.subheader(" Suggested Actions")
+                st.subheader("✅ Suggested Actions")
                 for step in data["suggested_actions"]:
                     st.markdown(f"- {step}")
 
             except Exception as e:
                 st.error(f"Something went wrong: {e}")
-
 
 
 
