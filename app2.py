@@ -9,7 +9,7 @@ API_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # === UI ===
 st.set_page_config(page_title="Case Decoder", layout="centered")
-st.title("⚖️ Case Decoder (AI-Powered Court Prediction)")
+st.title(" Case Decoder")
 
 
 # === Input Form ===
