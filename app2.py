@@ -2,7 +2,7 @@
 import streamlit as st
 import requests
 import json
-API_KEY = "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"
+API_KEY = "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"
 MODEL = "llama-3.3-70b-versatile"
 API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
